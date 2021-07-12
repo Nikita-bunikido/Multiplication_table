@@ -10,7 +10,7 @@ Here is an overview of NMultiply GUI:
 
 ---
 
-### Installation
+## Installation
 - #### Step 1
 First of all you need to clone this repository. The following command:
 
@@ -25,14 +25,15 @@ If you don't know how to use program, please read the tutorial:
 
 ---
 
-### Usage
+## Usage
 This is a short tutorial for understanding how to work with program. 
-- #### Graphic elements
+- ### Graphic elements
   - #### Buttons
     Here are two buttons:
     NEXT | FINISH
     :---:|:-----:
     Go to next exercise | Finish the test
+    
     When you press **Next** button program generates new exercise. And when you press **Finish** button you finish your test, and program shows your results.
 
   - #### Input field
@@ -55,7 +56,7 @@ This is a short tutorial for understanding how to work with program.
 
     It generates every time when you press **Next** button.
 
-- #### Top menu
+- ### Top menu
     In the top of window you have a menu:
 
     ![Example4](IMG/examples/5.png "Optional title")
@@ -79,12 +80,12 @@ This is a short tutorial for understanding how to work with program.
 
     ![Example7](IMG/examples/8.png "Optional title")
 
-  - #### Help tab
+  - ### Help tab
     After you clicking the **Help** tab you will receive a link to this page.
 
     ---
 
-    #### Compatibility
+    ### Compatibility
     NMultiply works on **Windows 7** and higher OS.
     *64 bit .exe* file in repository.
 

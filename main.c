@@ -24,7 +24,7 @@ HMENU hMenu;
 HDC dc;
 
 int primcount;
-int lastp = 0;
+int lastp = 0, lastc = 0;
 int correctanswers;
 int procent = 0;
 char outputstr[255] = "You solve correctly ";
@@ -36,6 +36,9 @@ HWND input;
 HWND info;
 HWND gen;
 HWND qbut;
+
+HBITMAP hnextbut, hfinishbut, hnextbutdark, hfinishbutdark,
+saveicon, openicon, nighticon, lighticon;
 
 void changetheme(int th, HDC dc){
     if(!th){
@@ -56,6 +59,9 @@ void changetheme(int th, HDC dc){
         ShowWindow(info, SW_SHOW);
         ShowWindow(gen, SW_SHOW);
         ShowWindow(qbut, SW_SHOW);
+
+        SendMessage(gen, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hnextbutdark);
+        SendMessage(qbut, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hfinishbutdark);
     } else {
         ShowWindow(primer, SW_HIDE);
         ShowWindow(input, SW_HIDE);
@@ -74,6 +80,9 @@ void changetheme(int th, HDC dc){
         ShowWindow(info, SW_SHOW);
         ShowWindow(gen, SW_SHOW);
         ShowWindow(qbut, SW_SHOW);
+
+        SendMessage(gen, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hnextbut);
+        SendMessage(qbut, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hfinishbut);
     }
 }
 
@@ -92,6 +101,10 @@ LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
             changetheme(1, dc);
         else
         if(wparam == SavePress){
+            if(primcount == 0)
+                MessageBox(NULL, "You can't save your results because you solve less than 1 exercise.", "Save error", MB_ICONERROR);
+            else if(lastp == 0)
+                MessageBox(NULL, "You can't save your results before you finish the test", "Save error", MB_ICONERROR);
             FILE *results = fopen("RES/results.txt", "w");
             fprintf(results, "NMultiply results.\nExercises - %d\nCorrect exercises - %d\nCorrect exercises - %d%%\n          -Nikita Donskov 2021", primcount, correctanswers, procent);
             fclose(results);
@@ -100,6 +113,7 @@ LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
             system("RES\\results.txt");
         } else
         if((HWND)lparam == gen){ //If it is continue button
+            lastc = 1;
             if(lastp){
                 correctanswers = 0; //Restart
                 primcount = 0;
@@ -120,9 +134,11 @@ LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
         } else
         if((HWND)lparam == qbut){ //If it is end of test button
             lastp = 1;
-            if(primcount == 0)
-                 MessageBox(NULL, "You can see your result if you solve more than zero exercices.", "Error", MB_ICONERROR);
-            else{
+            if(!lastc){
+                if(1)
+                    MessageBox(NULL, "You can see your result if you solve more than zero exercices.", "Error", MB_ICONERROR);
+            }else{
+            lastc = 0;
             printf("%d - Primers\n%d - Correct.", primcount, correctanswers);
             procent = (correctanswers * 100 / primcount); //Calculating percents
             printf("\nCorrect - %d%%", procent);
@@ -163,6 +179,28 @@ int main(int argc, char *argv[]){
 
     dc = GetDC(hwnd);
 
+    //HBITMAP hnextbut, hfinishbut, hnextbutdark, hfinishbutdark;
+    hnextbut = (HBITMAP)LoadImage(NULL, "IMG\\ui\\nextbut.bmp",
+    IMAGE_BITMAP,  100, 50, LR_LOADFROMFILE);
+    hfinishbut = (HBITMAP)LoadImage(NULL, "IMG\\ui\\finishbut.bmp",
+    IMAGE_BITMAP,  100, 50, LR_LOADFROMFILE);
+
+    hnextbutdark = (HBITMAP)LoadImage(NULL, "IMG\\ui\\nextbutdark.bmp",
+    IMAGE_BITMAP,  100, 50, LR_LOADFROMFILE);
+    hfinishbutdark = (HBITMAP)LoadImage(NULL, "IMG\\ui\\finishbutdark.bmp",
+    IMAGE_BITMAP,  100, 50, LR_LOADFROMFILE);
+    
+    saveicon = (HBITMAP)LoadImage(NULL, "IMG\\icons\\save.bmp",
+    IMAGE_BITMAP,  16, 16, LR_LOADFROMFILE);
+    openicon = (HBITMAP)LoadImage(NULL, "IMG\\icons\\open.bmp",
+    IMAGE_BITMAP,  16, 16, LR_LOADFROMFILE);
+
+    nighticon = (HBITMAP)LoadImage(NULL, "IMG\\icons\\night.bmp",
+    IMAGE_BITMAP,  16, 16, LR_LOADFROMFILE);
+    lighticon = (HBITMAP)LoadImage(NULL, "IMG\\icons\\light.bmp",
+    IMAGE_BITMAP,  16, 16, LR_LOADFROMFILE);
+
+
     //changetheme(1, dc);
 
     primer = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_RIGHT | ES_NUMBER | ES_READONLY, 
@@ -171,12 +209,14 @@ int main(int argc, char *argv[]){
     input = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_RIGHT | ES_NUMBER, 
     394, 146, 35, 20, hwnd, (HMENU)IDENedit, NULL, NULL);
 
-    gen = CreateWindow("button", "Continue", WS_VISIBLE | WS_CHILD, 
+    gen = CreateWindow("button", NULL, WS_VISIBLE | WS_CHILD | BS_BITMAP, 
     148, 215, 100, 50, hwnd, (HMENU)IDENgen, NULL, NULL);
+    SendMessage(gen, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hnextbut);
 
-    qbut = CreateWindow("button", "End", WS_VISIBLE | WS_CHILD, 
+    qbut = CreateWindow("button", NULL, WS_VISIBLE | WS_CHILD | BS_BITMAP, 
     330, 215, 100, 50, hwnd, (HMENU)IDENqbut, NULL, NULL);
-    
+    SendMessage(qbut, BM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hfinishbut);
+
     info = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_RIGHT | ES_NUMBER | ES_READONLY, 
     148, 176, 280, 20, hwnd, NULL, NULL, NULL);
     //ShowWindow(GetConsoleWindow(), SW_HIDE);
@@ -188,7 +228,7 @@ int main(int argc, char *argv[]){
     AppendMenu(hThemeMenu, MF_STRING, LightPress, "Light");
     AppendMenu(hThemeMenu, MF_STRING, DarkPress, "Dark");
 
-    AppendMenu(hResultsMenu, MF_STRING, SavePress, "Save");
+    AppendMenu(hResultsMenu, MF_STRING | MF_ENABLED, SavePress, "Save");
     AppendMenu(hResultsMenu, MF_STRING, OpenPress, "Open");
 
     AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hResultsMenu, "Results");
@@ -196,7 +236,13 @@ int main(int argc, char *argv[]){
     SetMenu(hwnd, hMenu);
     AppendMenu(hMenu, MF_STRING, HELPpress, "Help");
 
-    
+    //SetMenuItemInfoA(hResultsMenu, 0, TRUE, MF_BITMAP)
+
+    SetMenuItemBitmaps(hResultsMenu,0, MF_BYPOSITION, saveicon,saveicon);
+    SetMenuItemBitmaps(hResultsMenu,1, MF_BYPOSITION, openicon,openicon);
+
+    SetMenuItemBitmaps(hThemeMenu,1, MF_BYPOSITION, nighticon,nighticon);
+    SetMenuItemBitmaps(hThemeMenu,0, MF_BYPOSITION, lighticon,lighticon);
 
 
     MSG msg;

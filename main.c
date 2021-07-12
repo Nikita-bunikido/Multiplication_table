@@ -9,14 +9,24 @@
 #define IDENqbut 5
 
 #define HELPpress 6
+#define DarkPress 7
+#define LightPress 8
+#define SavePress 9
+#define OpenPress 10
 
 #define primlen 8
 
+#define w 600 
+#define h 480
+
 HMENU hMenu;
 
-int primcount = 0;
-int correctanswers = 0;
-int procent;
+HDC dc;
+
+int primcount;
+int lastp = 0;
+int correctanswers;
+int procent = 0;
 char outputstr[255] = "You solve correctly ";
 char buffer[255];
 char str[9], real[5];
@@ -27,6 +37,46 @@ HWND info;
 HWND gen;
 HWND qbut;
 
+void changetheme(int th, HDC dc){
+    if(!th){
+        ShowWindow(primer, SW_HIDE);
+        ShowWindow(input, SW_HIDE);
+        ShowWindow(info, SW_HIDE);
+        ShowWindow(gen, SW_HIDE);
+        ShowWindow(qbut, SW_HIDE);
+
+        SelectObject(dc, GetStockObject(DC_BRUSH));
+        SetDCBrushColor(dc, RGB(50, 50, 50));
+        SelectObject(dc, GetStockObject(DC_PEN));
+        SetDCPenColor(dc, RGB(50, 50, 50));
+        Rectangle(dc, 0, 0, w, h);
+
+        ShowWindow(primer, SW_SHOW);
+        ShowWindow(input, SW_SHOW);
+        ShowWindow(info, SW_SHOW);
+        ShowWindow(gen, SW_SHOW);
+        ShowWindow(qbut, SW_SHOW);
+    } else {
+        ShowWindow(primer, SW_HIDE);
+        ShowWindow(input, SW_HIDE);
+        ShowWindow(info, SW_HIDE);
+        ShowWindow(gen, SW_HIDE);
+        ShowWindow(qbut, SW_HIDE);
+
+        SelectObject(dc, GetStockObject(DC_BRUSH));
+        SetDCBrushColor(dc, RGB(255, 255, 255));
+        SelectObject(dc, GetStockObject(DC_PEN));
+        SetDCPenColor(dc, RGB(255, 255, 255));
+        Rectangle(dc, 0, 0, w, h);
+
+        ShowWindow(primer, SW_SHOW);
+        ShowWindow(input, SW_SHOW);
+        ShowWindow(info, SW_SHOW);
+        ShowWindow(gen, SW_SHOW);
+        ShowWindow(qbut, SW_SHOW);
+    }
+}
+
 LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
     if(message == WM_DESTROY) //If exit button pressed
         exit(0);
@@ -35,7 +85,26 @@ LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
         if(wparam == HELPpress) //If it is Help button in menu
             MessageBox(NULL, "Documentation can be found on\nhttps://github.com/Nikita-bunikido/Multiplication_table.git.\n                          -Nikita Donskov 2021", "Help", MB_ICONINFORMATION);
         else
+        if(wparam == DarkPress)
+            changetheme(0, dc);
+        else
+        if(wparam == LightPress)
+            changetheme(1, dc);
+        else
+        if(wparam == SavePress){
+            FILE *results = fopen("RES/results.txt", "w");
+            fprintf(results, "NMultiply results.\nExercises - %d\nCorrect exercises - %d\nCorrect exercises - %d%%\n          -Nikita Donskov 2021", primcount, correctanswers, procent);
+            fclose(results);
+        } else
+        if(wparam == OpenPress){
+            system("RES\\results.txt");
+        } else
         if((HWND)lparam == gen){ //If it is continue button
+            if(lastp){
+                correctanswers = 0; //Restart
+                primcount = 0;
+                lastp = 0;
+            }
             if(check(myexp, real)){ //If correct answer
                 SetWindowText(info, "Correct answer."); //Information
                 printf("OK!\n");
@@ -50,6 +119,7 @@ LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
             primcount++;
         } else
         if((HWND)lparam == qbut){ //If it is end of test button
+            lastp = 1;
             if(primcount == 0)
                  MessageBox(NULL, "You can see your result if you solve more than zero exercices.", "Error", MB_ICONERROR);
             else{
@@ -62,9 +132,6 @@ LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
             strcat(outputstr, "% of exercises.");
 
             MessageBox(NULL, outputstr, "Results", MB_ICONINFORMATION);
-            
-            correctanswers = 0; //Restart
-            primcount = 0;
 
             myexp = generate(str);
             printf("%s\n", str);
@@ -91,8 +158,12 @@ int main(int argc, char *argv[]){
 
     HWND hwnd;
     hwnd = CreateWindow("win1", "Multiplication-table", 
-    WS_OVERLAPPEDWINDOW, 50, 50, 600, 430, NULL, NULL, 
+    WS_OVERLAPPEDWINDOW, 50, 50, w, h, NULL, NULL, 
     NULL, NULL);
+
+    dc = GetDC(hwnd);
+
+    //changetheme(1, dc);
 
     primer = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_RIGHT | ES_NUMBER | ES_READONLY, 
     148, 146, 235, 20, hwnd, NULL, NULL, NULL);
@@ -105,7 +176,7 @@ int main(int argc, char *argv[]){
 
     qbut = CreateWindow("button", "End", WS_VISIBLE | WS_CHILD, 
     330, 215, 100, 50, hwnd, (HMENU)IDENqbut, NULL, NULL);
-
+    
     info = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_RIGHT | ES_NUMBER | ES_READONLY, 
     148, 176, 280, 20, hwnd, NULL, NULL, NULL);
     //ShowWindow(GetConsoleWindow(), SW_HIDE);
@@ -114,16 +185,18 @@ int main(int argc, char *argv[]){
     HMENU hThemeMenu = CreateMenu();
     HMENU hResultsMenu = CreateMenu();
 
-    AppendMenu(hThemeMenu, MF_STRING, NULL, "Light");
-    AppendMenu(hThemeMenu, MF_STRING, NULL, "Dark");
+    AppendMenu(hThemeMenu, MF_STRING, LightPress, "Light");
+    AppendMenu(hThemeMenu, MF_STRING, DarkPress, "Dark");
 
-    AppendMenu(hResultsMenu, MF_STRING, NULL, "Save");
-    AppendMenu(hResultsMenu, MF_STRING, NULL, "Open");
+    AppendMenu(hResultsMenu, MF_STRING, SavePress, "Save");
+    AppendMenu(hResultsMenu, MF_STRING, OpenPress, "Open");
 
     AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hResultsMenu, "Results");
     AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hThemeMenu, "Theme");
     SetMenu(hwnd, hMenu);
     AppendMenu(hMenu, MF_STRING, HELPpress, "Help");
+
+    
 
 
     MSG msg;
@@ -133,6 +206,8 @@ int main(int argc, char *argv[]){
     myexp = generate(str);
     printf("%s\n", str);
     SetWindowText(primer, str);
+
+    changetheme(1, dc);
 
     while(GetMessage(&msg, NULL, 0, 0)){
         TranslateMessage(&msg);

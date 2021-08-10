@@ -1,0 +1,6 @@
+NMultiply results.
+Exercises - 1
+Correct exercises - 1
+Correct exercises(percents) - 100%
+Solve time - 3.648 sec.
+-NMultiply 2021

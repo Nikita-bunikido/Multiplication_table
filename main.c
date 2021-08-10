@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <windows.h>
+#include <time.h>
 
 #include "logic.h"
 #include "themes.h"
+
+#define TOCK(X) printf("time %s: %g sec.\n", (#X), (double)(clock() - (X)) / CLOCKS_PER_SEC)
 
 #define w 600 
 #define h 480
@@ -41,13 +45,16 @@ HWND qbut;
 HBITMAP hnextbut, hfinishbut, hnextbutdark, hfinishbutdark,
 saveicon, openicon, nighticon, lighticon;
 
+clock_t Solve_time;
+int solve_start = 0;
+
 LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
     if(message == WM_DESTROY) //If exit button pressed
         exit(0);
 
     else if(message == WM_COMMAND){
         if(wparam == HELPpress) //If it is Help button in menu
-            MessageBox(NULL, "Documentation can be found on\nhttps://github.com/Nikita-bunikido/Multiplication_table.git.\n                          -Nikita Donskov 2021", "Help", MB_ICONINFORMATION);
+            MessageBox(NULL, "Documentation can be found on\nhttps://github.com/Nikita-bunikido/Multiplication_table.git.\n                          -NMultiply 2021", "Help", MB_ICONINFORMATION);
         else
         if(wparam == DarkPress)
             changetheme(0, dc);
@@ -62,7 +69,7 @@ LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
                 MessageBox(NULL, "You can't save your results before you finish the test", "Save error", MB_ICONERROR);
             if(primcount != 0 && lastp != 0){
                 FILE *results = fopen("RES/results.txt", "w");
-                fprintf(results, "NMultiply results.\nExercises - %d\nCorrect exercises - %d\nCorrect exercises - %d%%\n          -Nikita Donskov 2021", primcount, correctanswers, procent);
+                fprintf(results, "NMultiply results.\nExercises - %d\nCorrect exercises - %d\nCorrect exercises(percents) - %d%%\nSolve time - %g sec.\n-NMultiply 2021", primcount, correctanswers, procent, (double)(clock() - Solve_time) / CLOCKS_PER_SEC);
                 fclose(results);
                 primcount = procent = lastp = correctanswers = 0;
             }
@@ -71,6 +78,7 @@ LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
             system("RES\\results.txt");
         } else
         if((HWND)lparam == gen){ //If it is continue button
+            if(!solve_start) { solve_start = 1; Solve_time = clock(); }
             lastc = 1;
             if(lastp){
                 correctanswers = 0; //Restart
@@ -111,6 +119,25 @@ LRESULT Mydef(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam){
         else
         if(LOWORD(wparam) == IDENedit){
             GetWindowText((HWND)lparam, real, 5); //Input text to string
+            if (real[strlen(real) - 1] == '.'){
+            if(!solve_start) { solve_start = 1; Solve_time = clock(); }
+                lastc = 1;
+            if(lastp){
+                correctanswers = 0; //Restart
+                primcount = 0;
+                lastp = 0;
+            }
+            if(check(myexp, real)){ //If correct answer
+                SetWindowText(info, "Correct answer."); //Information
+                correctanswers++; //Increment correct answers
+            } else
+                SetWindowText(info, "Incorrect answer.");
+
+            myexp = generate(str); //Expexted answer and prim generate
+            SetWindowText(primer, str);  //Exercise set
+            SetWindowText(input, "");    //Null in the input
+            primcount++;
+            }
         }
     } else
     return DefWindowProcA(hwnd, message, wparam, lparam);
@@ -155,7 +182,7 @@ int main(int argc, char *argv[]){
     primer = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_RIGHT | ES_NUMBER | ES_READONLY, 
     148, 146, 235, 20, hwnd, NULL, NULL, NULL);
     
-    input = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_RIGHT | ES_NUMBER, 
+    input = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_RIGHT /*| ES_NUMBER*/, 
     394, 146, 35, 20, hwnd, (HMENU)IDENedit, NULL, NULL);
 
     gen = CreateWindow("button", NULL, WS_VISIBLE | WS_CHILD | BS_BITMAP, 
